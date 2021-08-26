@@ -86,6 +86,8 @@
     "dark": "כהה",
     "light": "בהיר",
     "Thin mode: ": "",
+    "Miscellaneous preferences": "",
+    "Automaticatic instance redirection (fallback to redirect.invidious.io): ": "",
     "Subscription preferences": "העדפות מינויים",
     "Show annotations by default for subscribed channels: ": "Show annotations by default for subscribed channels? ",
     "Redirect homepage to feed: ": "",
@@ -115,6 +117,7 @@
     "Administrator preferences": "הגדרות ניהול מערכת",
     "Default homepage: ": "Default homepage: ",
     "Feed menu: ": "תפריט ההזנה: ",
+    "Show nickname on top: ": "",
     "Top enabled: ": "",
     "CAPTCHA enabled: ": "",
     "Login enabled: ": "",
@@ -161,6 +164,8 @@
     "Show more": "",
     "Show less": "",
     "Watch on YouTube": "צפייה ב־YouTube",
+    "Switch Invidious Instance": "",
+    "Broken? Try another Invidious Instance": "",
     "Hide annotations": "",
     "Show annotations": "",
     "Genre: ": "Genre: ",
@@ -173,7 +178,7 @@
     "Shared `x`": "",
     "`x` views": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` צפיות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` צפיות."
+        "": "`x` צפיות"
     },
     "Premieres in `x`": "",
     "Premieres `x`": "",
@@ -182,7 +187,7 @@
     "View more comments on Reddit": "להצגת תגובות נוספות ב־Reddit",
     "View `x` comments": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "הצגת `x` תגובות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "הצגת `x` תגובות."
+        "": "הצגת `x` תגובות"
     },
     "View Reddit comments": "להצגת התגובות ב־Reddit",
     "Hide replies": "הסתרת תגובות",
@@ -209,8 +214,8 @@
     "Could not get channel info.": "לא היה ניתן לקבל מידע על הערוץ.",
     "Could not fetch comments": "לא היה ניתן למשוך את התגובות",
     "View `x` replies": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "הצגת `x` תגובות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "הצגת `x` תגובות."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "הצגת `x` תגובות",
+        "": "הצגת `x` תגובות"
     },
     "`x` ago": "לפני `x`",
     "Load more": "לטעון עוד",
@@ -336,32 +341,32 @@
     "Yoruba": "יורובה",
     "Zulu": "זולו",
     "`x` years": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שנים.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` שנים."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שנים",
+        "": "`x` שנים"
     },
     "`x` months": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` חודשים.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` חודשים."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` חודשים",
+        "": "`x` חודשים"
     },
     "`x` weeks": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שבועות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` שבועות."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שבועות",
+        "": "`x` שבועות"
     },
     "`x` days": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` ימים.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` ימים."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` ימים",
+        "": "`x` ימים"
     },
     "`x` hours": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שעות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` שעות."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שעות",
+        "": "`x` שעות"
     },
     "`x` minutes": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` דקות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` דקות."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` דקות",
+        "": "`x` דקות"
     },
     "`x` seconds": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שניות.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "`x` שניות."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` שניות",
+        "": "`x` שניות"
     },
     "Fallback comments: ": "",
     "Popular": "סרטונים פופולריים",
@@ -415,5 +420,8 @@
     "location": "מיקום",
     "hdr": "HDR",
     "filter": "סינון",
-    "Current version: ": "הגרסה הנוכחית: "
+    "Current version: ": "הגרסה הנוכחית: ",
+    "next_steps_error_message": "",
+    "next_steps_error_message_refresh": "",
+    "next_steps_error_message_go_to_youtube": ""
 }

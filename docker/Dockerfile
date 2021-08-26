@@ -1,14 +1,21 @@
-FROM crystallang/crystal:1.0.0-alpine AS builder
-RUN apk add --no-cache curl sqlite-static yaml-static
+FROM crystallang/crystal:1.1.1-alpine AS builder
+RUN apk add --no-cache sqlite-static yaml-static
+
 WORKDIR /invidious
 COPY ./shard.yml ./shard.yml
 COPY ./shard.lock ./shard.lock
-RUN shards install && \
-    curl -Lo ./lib/lsquic/src/lsquic/ext/liblsquic.a https://github.com/iv-org/lsquic-static-alpine/releases/download/v2.18.1/liblsquic.a
+RUN shards install
+
+COPY --from=quay.io/invidious/lsquic-compiled /root/liblsquic.a ./lib/lsquic/src/lsquic/ext/liblsquic.a
+
 COPY ./src/ ./src/
 # TODO: .git folder is required for building – this is destructive.
 # See definition of CURRENT_BRANCH, CURRENT_COMMIT and CURRENT_VERSION.
 COPY ./.git/ ./.git/
+
+RUN crystal spec --warnings all \
+    --link-flags "-lxml2 -llzma"
+
 RUN crystal build ./src/invidious.cr \
     --static --warnings all \
     --link-flags "-lxml2 -llzma"

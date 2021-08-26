@@ -17,6 +17,7 @@
 require "digest/md5"
 require "file_utils"
 require "kemal"
+require "athena-negotiation"
 require "openssl/hmac"
 require "option_parser"
 require "pg"
@@ -27,6 +28,7 @@ require "compress/zip"
 require "protodec/utils"
 require "./invidious/helpers/*"
 require "./invidious/*"
+require "./invidious/channels/*"
 require "./invidious/routes/**"
 require "./invidious/jobs/**"
 
@@ -165,23 +167,62 @@ def popular_videos
 end
 
 before_all do |env|
-  preferences = begin
-    Preferences.from_json(URI.decode_www_form(env.request.cookies["PREFS"]?.try &.value || "{}"))
+  preferences = Preferences.from_json("{}")
+
+  begin
+    if prefs_cookie = env.request.cookies["PREFS"]?
+      preferences = Preferences.from_json(URI.decode_www_form(prefs_cookie.value))
+    else
+      if language_header = env.request.headers["Accept-Language"]?
+        if language = ANG.language_negotiator.best(language_header, LOCALES.keys)
+          preferences.locale = language.header
+        end
+      end
+    end
   rescue
-    Preferences.from_json("{}")
+    preferences = Preferences.from_json("{}")
   end
 
   env.set "preferences", preferences
   env.response.headers["X-XSS-Protection"] = "1; mode=block"
   env.response.headers["X-Content-Type-Options"] = "nosniff"
-  extra_media_csp = ""
+
+  # Allow media resources to be loaded from google servers
+  # TODO: check if *.youtube.com can be removed
   if CONFIG.disabled?("local") || !preferences.local
-    extra_media_csp += " https://*.googlevideo.com:443"
-    extra_media_csp += " https://*.youtube.com:443"
+    extra_media_csp = " https://*.googlevideo.com:443 https://*.youtube.com:443"
+  else
+    extra_media_csp = ""
   end
-  # TODO: Remove style-src's 'unsafe-inline', requires to remove all inline styles (<style> [..] </style>, style=" [..] ")
-  env.response.headers["Content-Security-Policy"] = "default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self'; manifest-src 'self'; media-src 'self' blob:#{extra_media_csp}; child-src blob:"
+
+  # Only allow the pages at /embed/* to be embedded
+  if env.request.resource.starts_with?("/embed")
+    frame_ancestors = "'self' http: https:"
+  else
+    frame_ancestors = "'none'"
+  end
+
+  # TODO: Remove style-src's 'unsafe-inline', requires to remove all
+  # inline styles (<style> [..] </style>, style=" [..] ")
+  env.response.headers["Content-Security-Policy"] = {
+    "default-src 'none'",
+    "script-src 'self'",
+    "style-src 'self' 'unsafe-inline'",
+    "img-src 'self' data:",
+    "font-src 'self' data:",
+    "connect-src 'self'",
+    "manifest-src 'self'",
+    "media-src 'self' blob:" + extra_media_csp,
+    "child-src 'self' blob:",
+    "frame-src 'self'",
+    "frame-ancestors " + frame_ancestors,
+  }.join("; ")
+
   env.response.headers["Referrer-Policy"] = "same-origin"
+
+  # Ask the chrom*-based browsers to disable FLoC
+  # See: https://blog.runcloud.io/google-floc/
+  env.response.headers["Permissions-Policy"] = "interest-cohort=()"
 
   if (Kemal.config.ssl || CONFIG.https_only) && CONFIG.hsts
     env.response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
@@ -279,12 +320,31 @@ Invidious::Routing.get "/", Invidious::Routes::Misc, :home
 Invidious::Routing.get "/privacy", Invidious::Routes::Misc, :privacy
 Invidious::Routing.get "/licenses", Invidious::Routes::Misc, :licenses
 
+Invidious::Routing.get "/channel/:ucid", Invidious::Routes::Channels, :home
+Invidious::Routing.get "/channel/:ucid/home", Invidious::Routes::Channels, :home
+Invidious::Routing.get "/channel/:ucid/videos", Invidious::Routes::Channels, :videos
+Invidious::Routing.get "/channel/:ucid/playlists", Invidious::Routes::Channels, :playlists
+Invidious::Routing.get "/channel/:ucid/community", Invidious::Routes::Channels, :community
+Invidious::Routing.get "/channel/:ucid/about", Invidious::Routes::Channels, :about
+
+["", "/videos", "/playlists", "/community", "/about"].each do |path|
+  # /c/LinusTechTips
+  Invidious::Routing.get "/c/:user#{path}", Invidious::Routes::Channels, :brand_redirect
+  # /user/linustechtips | Not always the same as /c/
+  Invidious::Routing.get "/user/:user#{path}", Invidious::Routes::Channels, :brand_redirect
+  # /attribution_link?a=anything&u=/channel/UCZYTClx2T1of7BRZ86-8fow
+  Invidious::Routing.get "/attribution_link#{path}", Invidious::Routes::Channels, :brand_redirect
+  # /profile?user=linustechtips
+  Invidious::Routing.get "/profile/#{path}", Invidious::Routes::Channels, :profile
+end
+
 Invidious::Routing.get "/watch", Invidious::Routes::Watch, :handle
 Invidious::Routing.get "/watch/:id", Invidious::Routes::Watch, :redirect
 Invidious::Routing.get "/shorts/:id", Invidious::Routes::Watch, :redirect
 Invidious::Routing.get "/w/:id", Invidious::Routes::Watch, :redirect
 Invidious::Routing.get "/v/:id", Invidious::Routes::Watch, :redirect
 Invidious::Routing.get "/e/:id", Invidious::Routes::Watch, :redirect
+Invidious::Routing.get "/redirect", Invidious::Routes::Misc, :cross_instance_redirect
 
 Invidious::Routing.get "/embed/", Invidious::Routes::Embed, :redirect
 Invidious::Routing.get "/embed/:id", Invidious::Routes::Embed, :show
@@ -1289,7 +1349,6 @@ get "/feed/channel/:ucid" do |env|
       description_html:   description_html,
       length_seconds:     0,
       live_now:           false,
-      paid:               false,
       premium:            false,
       premiere_timestamp: nil,
     })
@@ -1587,217 +1646,6 @@ end
   end
 end
 
-# YouTube appears to let users set a "brand" URL that
-# is different from their username, so we convert that here
-get "/c/:user" do |env|
-  locale = LOCALES[env.get("preferences").as(Preferences).locale]?
-
-  user = env.params.url["user"]
-
-  response = YT_POOL.client &.get("/c/#{user}")
-  html = XML.parse_html(response.body)
-
-  ucid = html.xpath_node(%q(//link[@rel="canonical"])).try &.["href"].split("/")[-1]
-  next env.redirect "/" if !ucid
-
-  env.redirect "/channel/#{ucid}"
-end
-
-# Legacy endpoint for /user/:username
-get "/profile" do |env|
-  user = env.params.query["user"]?
-  if !user
-    env.redirect "/"
-  else
-    env.redirect "/user/#{user}"
-  end
-end
-
-get "/attribution_link" do |env|
-  if query = env.params.query["u"]?
-    url = URI.parse(query).request_target
-  else
-    url = "/"
-  end
-
-  env.redirect url
-end
-
-# Page used by YouTube to provide captioning widget, since we
-# don't support it we redirect to '/'
-get "/timedtext_video" do |env|
-  env.redirect "/"
-end
-
-get "/user/:user" do |env|
-  user = env.params.url["user"]
-  env.redirect "/channel/#{user}"
-end
-
-get "/user/:user/videos" do |env|
-  user = env.params.url["user"]
-  env.redirect "/channel/#{user}/videos"
-end
-
-get "/user/:user/about" do |env|
-  user = env.params.url["user"]
-  env.redirect "/channel/#{user}"
-end
-
-get "/channel/:ucid/about" do |env|
-  ucid = env.params.url["ucid"]
-  env.redirect "/channel/#{ucid}"
-end
-
-get "/channel/:ucid" do |env|
-  locale = LOCALES[env.get("preferences").as(Preferences).locale]?
-
-  user = env.get? "user"
-  if user
-    user = user.as(User)
-    subscriptions = user.subscriptions
-  end
-  subscriptions ||= [] of String
-
-  ucid = env.params.url["ucid"]
-
-  page = env.params.query["page"]?.try &.to_i?
-  page ||= 1
-
-  continuation = env.params.query["continuation"]?
-
-  sort_by = env.params.query["sort_by"]?.try &.downcase
-
-  begin
-    channel = get_about_info(ucid, locale)
-  rescue ex : ChannelRedirect
-    next env.redirect env.request.resource.gsub(ucid, ex.channel_id)
-  rescue ex
-    next error_template(500, ex)
-  end
-
-  if channel.auto_generated
-    sort_options = {"last", "oldest", "newest"}
-    sort_by ||= "last"
-
-    items, continuation = fetch_channel_playlists(channel.ucid, channel.author, continuation, sort_by)
-    items.uniq! do |item|
-      if item.responds_to?(:title)
-        item.title
-      elsif item.responds_to?(:author)
-        item.author
-      end
-    end
-    items = items.select(&.is_a?(SearchPlaylist)).map(&.as(SearchPlaylist))
-    items.each { |item| item.author = "" }
-  else
-    sort_options = {"newest", "oldest", "popular"}
-    sort_by ||= "newest"
-
-    count, items = get_60_videos(channel.ucid, channel.author, page, channel.auto_generated, sort_by)
-    items.reject! &.paid
-
-    env.set "search", "channel:#{channel.ucid} "
-  end
-
-  templated "channel"
-end
-
-get "/channel/:ucid/videos" do |env|
-  locale = LOCALES[env.get("preferences").as(Preferences).locale]?
-
-  ucid = env.params.url["ucid"]
-  params = env.request.query
-
-  if !params || params.empty?
-    params = ""
-  else
-    params = "?#{params}"
-  end
-
-  env.redirect "/channel/#{ucid}#{params}"
-end
-
-get "/channel/:ucid/playlists" do |env|
-  locale = LOCALES[env.get("preferences").as(Preferences).locale]?
-
-  user = env.get? "user"
-  if user
-    user = user.as(User)
-    subscriptions = user.subscriptions
-  end
-  subscriptions ||= [] of String
-
-  ucid = env.params.url["ucid"]
-
-  continuation = env.params.query["continuation"]?
-
-  sort_by = env.params.query["sort_by"]?.try &.downcase
-  sort_by ||= "last"
-
-  begin
-    channel = get_about_info(ucid, locale)
-  rescue ex : ChannelRedirect
-    next env.redirect env.request.resource.gsub(ucid, ex.channel_id)
-  rescue ex
-    next error_template(500, ex)
-  end
-
-  if channel.auto_generated
-    next env.redirect "/channel/#{channel.ucid}"
-  end
-
-  items, continuation = fetch_channel_playlists(channel.ucid, channel.author, continuation, sort_by)
-  items = items.select { |item| item.is_a?(SearchPlaylist) }.map { |item| item.as(SearchPlaylist) }
-  items.each { |item| item.author = "" }
-
-  env.set "search", "channel:#{channel.ucid} "
-  templated "playlists"
-end
-
-get "/channel/:ucid/community" do |env|
-  locale = LOCALES[env.get("preferences").as(Preferences).locale]?
-
-  user = env.get? "user"
-  if user
-    user = user.as(User)
-    subscriptions = user.subscriptions
-  end
-  subscriptions ||= [] of String
-
-  ucid = env.params.url["ucid"]
-
-  thin_mode = env.params.query["thin_mode"]? || env.get("preferences").as(Preferences).thin_mode
-  thin_mode = thin_mode == "true"
-
-  continuation = env.params.query["continuation"]?
-  # sort_by = env.params.query["sort_by"]?.try &.downcase
-
-  begin
-    channel = get_about_info(ucid, locale)
-  rescue ex : ChannelRedirect
-    next env.redirect env.request.resource.gsub(ucid, ex.channel_id)
-  rescue ex
-    next error_template(500, ex)
-  end
-
-  if !channel.tabs.includes? "community"
-    next env.redirect "/channel/#{channel.ucid}"
-  end
-
-  begin
-    items = JSON.parse(fetch_channel_community(ucid, continuation, locale, "json", thin_mode))
-  rescue ex : InfoException
-    env.response.status_code = 500
-    error_message = ex.message
-  rescue ex
-    next error_template(500, ex)
-  end
-
-  env.set "search", "channel:#{channel.ucid} "
-  templated "community"
-end
-
 # API Endpoints
 
 get "/api/v1/stats" do |env|
@@ -1931,9 +1779,9 @@ get "/api/v1/captions/:id" do |env|
           json.array do
             captions.each do |caption|
               json.object do
-                json.field "label", caption.name.simpleText
+                json.field "label", caption.name
                 json.field "languageCode", caption.languageCode
-                json.field "url", "/api/v1/captions/#{id}?label=#{URI.encode_www_form(caption.name.simpleText)}"
+                json.field "url", "/api/v1/captions/#{id}?label=#{URI.encode_www_form(caption.name)}"
               end
             end
           end
@@ -1949,7 +1797,7 @@ get "/api/v1/captions/:id" do |env|
   if lang
     caption = captions.select { |caption| caption.languageCode == lang }
   else
-    caption = captions.select { |caption| caption.name.simpleText == label }
+    caption = captions.select { |caption| caption.name == label }
   end
 
   if caption.empty?
@@ -1963,7 +1811,7 @@ get "/api/v1/captions/:id" do |env|
 
   # Auto-generated captions often have cues that aren't aligned properly with the video,
   # as well as some other markup that makes it cumbersome, so we try to fix that here
-  if caption.name.simpleText.includes? "auto-generated"
+  if caption.name.includes? "auto-generated"
     caption_xml = YT_POOL.client &.get(url).body
     caption_xml = XML.parse(caption_xml)
 
@@ -2035,9 +1883,6 @@ get "/api/v1/comments/:id" do |env|
   format = env.params.query["format"]?
   format ||= "json"
 
-  action = env.params.query["action"]?
-  action ||= "action_get_comments"
-
   continuation = env.params.query["continuation"]?
   sort_by = env.params.query["sort_by"]?.try &.downcase
 
@@ -2045,7 +1890,7 @@ get "/api/v1/comments/:id" do |env|
     sort_by ||= "top"
 
     begin
-      comments = fetch_youtube_comments(id, PG_DB, continuation, format, locale, thin_mode, region, sort_by: sort_by, action: action)
+      comments = fetch_youtube_comments(id, continuation, format, locale, thin_mode, region, sort_by: sort_by)
     rescue ex
       next error_json(500, ex)
     end
@@ -2319,7 +2164,6 @@ get "/api/v1/channels/:ucid" do |env|
       json.field "subCount", channel.sub_count
       json.field "totalViews", channel.total_views
       json.field "joined", channel.joined.to_unix
-      json.field "paid", channel.paid
 
       json.field "autoGenerated", channel.auto_generated
       json.field "isFamilyFriendly", channel.is_family_friendly
@@ -3306,7 +3150,7 @@ get "/api/manifest/hls_playlist/*" do |env|
   manifest = response.body
 
   if local
-    manifest = manifest.gsub(/^https:\/\/r\d---.{11}\.c\.youtube\.com[^\n]*/m) do |match|
+    manifest = manifest.gsub(/^https:\/\/\w+---.{11}\.c\.youtube\.com[^\n]*/m) do |match|
       path = URI.parse(match).path
 
       path = path.lchop("/videoplayback/")

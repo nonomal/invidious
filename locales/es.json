@@ -5,7 +5,7 @@
     },
     "`x` videos": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` vídeos",
-        "": "`x` vídeos."
+        "": "`x` vídeos"
     },
     "`x` playlists": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` listas de reproducción",
@@ -86,6 +86,8 @@
     "dark": "oscuro",
     "light": "claro",
     "Thin mode: ": "Modo compacto: ",
+    "Miscellaneous preferences": "Preferencias misceláneas",
+    "Automaticatic instance redirection (fallback to redirect.invidious.io): ": "Redirección automática de instancia (segunda opción a redirect.invidious.io): ",
     "Subscription preferences": "Preferencias de la suscripción",
     "Show annotations by default for subscribed channels: ": "¿Mostrar anotaciones por defecto para los canales suscritos? ",
     "Redirect homepage to feed: ": "Redirigir la página de inicio a la fuente: ",
@@ -115,6 +117,7 @@
     "Administrator preferences": "Preferencias de administrador",
     "Default homepage: ": "Página de inicio por defecto: ",
     "Feed menu: ": "Menú de fuentes: ",
+    "Show nickname on top: ": "Mostrar nombre de usuario arriba: ",
     "Top enabled: ": "¿Habilitar los destacados? ",
     "CAPTCHA enabled: ": "¿Habilitar los CAPTCHA? ",
     "Login enabled: ": "¿Habilitar el inicio de sesión? ",
@@ -160,7 +163,9 @@
     "Editing playlist `x`": "Editando la lista de reproducción 'x'",
     "Show more": "Mostrar más",
     "Show less": "Mostrar menos",
-    "Watch on YouTube": "Ver el vídeo en Youtube",
+    "Watch on YouTube": "Ver el vídeo en YouTube",
+    "Switch Invidious Instance": "Cambiar Instancia de Invidious",
+    "Broken? Try another Invidious Instance": "¿Algún error? Prueba otra instancia de Invidious",
     "Hide annotations": "Ocultar anotaciones",
     "Show annotations": "Mostrar anotaciones",
     "Genre: ": "Género: ",
@@ -173,7 +178,7 @@
     "Shared `x`": "Compartido `x`",
     "`x` views": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` visualizaciones",
-        "": "`x` visualizaciones."
+        "": "`x` visualizaciones"
     },
     "Premieres in `x`": "Se estrena en `x`",
     "Premieres `x`": "Estrenos `x`",
@@ -182,7 +187,7 @@
     "View more comments on Reddit": "Ver más comentarios en Reddit",
     "View `x` comments": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "Ver `x` comentarios",
-        "": "Ver `x` comentarios."
+        "": "Ver `x` comentarios"
     },
     "View Reddit comments": "Ver los comentarios de Reddit",
     "Hide replies": "Ocultar las respuestas",
@@ -210,13 +215,13 @@
     "Could not fetch comments": "No se han podido recuperar los comentarios",
     "View `x` replies": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "Ver `x` respuestas",
-        "": "Ver `x` respuestas."
+        "": "Ver `x` respuestas"
     },
     "`x` ago": "hace `x`",
     "Load more": "Cargar más",
     "`x` points": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` puntos",
-        "": "`x` puntos."
+        "": "`x` puntos"
     },
     "Could not create mix.": "No se ha podido crear la mezcla.",
     "Empty playlist": "La lista de reproducción está vacía",
@@ -337,31 +342,31 @@
     "Zulu": "Zulú",
     "`x` years": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` años",
-        "": "`x` años."
+        "": "`x` años"
     },
     "`x` months": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` meses",
-        "": "`x` meses."
+        "": "`x` meses"
     },
     "`x` weeks": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` semanas",
-        "": "`x` semanas."
+        "": "`x` semanas"
     },
     "`x` days": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` días",
-        "": "`x` días."
+        "": "`x` días"
     },
     "`x` hours": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` horas",
-        "": "`x` horas."
+        "": "`x` horas"
     },
     "`x` minutes": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` minutos",
-        "": "`x` minutos."
+        "": "`x` minutos"
     },
     "`x` seconds": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "`x` segundos",
-        "": "`x` segundos."
+        "": "`x` segundos"
     },
     "Fallback comments: ": "Comentarios alternativos: ",
     "Popular": "Populares",
@@ -415,5 +420,8 @@
     "location": "ubicación",
     "hdr": "hdr",
     "filter": "filtro",
-    "Current version: ": "Versión actual: "
+    "Current version: ": "Versión actual: ",
+    "next_steps_error_message": "Después de lo cual deberías intentar: ",
+    "next_steps_error_message_refresh": "Recargar",
+    "next_steps_error_message_go_to_youtube": "Ir a YouTube"
 }

@@ -44,6 +44,7 @@ struct ConfigPreferences
   property quality_dash : String = "auto"
   property default_home : String? = "Popular"
   property feed_menu : Array(String) = ["Popular", "Trending", "Subscriptions", "Playlists"]
+  property automatic_instance_redirect : Bool = false
   property related_videos : Bool = true
   property sort : String = "published"
   property speed : Float32 = 1.0_f32
@@ -53,6 +54,7 @@ struct ConfigPreferences
   property extend_desc : Bool = false
   property volume : Int32 = 100
   property vr_mode : Bool = true
+  property show_nick : Bool = true
 
   def to_tuple
     {% begin %}
@@ -266,7 +268,6 @@ def extract_item(item : JSON::Any, author_fallback : String? = nil, author_id_fa
                        .try &.["text"]?.try &.["simpleText"]?.try &.as_s.try { |t| decode_length_seconds(t) } || 0
 
     live_now = false
-    paid = false
     premium = false
 
     premiere_timestamp = i["upcomingEventData"]?.try &.["startTime"]?.try { |t| Time.unix(t.as_s.to_i64) }
@@ -279,8 +280,6 @@ def extract_item(item : JSON::Any, author_fallback : String? = nil, author_id_fa
       when "New", "4K", "CC"
         # TODO
       when "Premium"
-        paid = true
-
         # TODO: Potentially available as i["topStandaloneBadge"]["metadataBadgeRenderer"]
         premium = true
       else nil # Ignore
@@ -297,7 +296,6 @@ def extract_item(item : JSON::Any, author_fallback : String? = nil, author_id_fa
       description_html:   description_html,
       length_seconds:     length_seconds,
       live_now:           live_now,
-      paid:               paid,
       premium:            premium,
       premiere_timestamp: premiere_timestamp,
     })
@@ -507,12 +505,6 @@ def check_table(db, table_name, struct_type = nil)
   end
 end
 
-class PG::ResultSet
-  def field(index = @column_index)
-    @fields.not_nil![index]
-  end
-end
-
 def get_column_array(db, table_name)
   column_array = [] of String
   db.query("SELECT * FROM #{table_name} LIMIT 0") do |rs|
@@ -695,87 +687,5 @@ def proxy_file(response, env)
     end
   else
     IO.copy response.body_io, env.response
-  end
-end
-
-# See https://github.com/kemalcr/kemal/pull/576
-class HTTP::Server::Response::Output
-  def close
-    return if closed?
-
-    unless response.wrote_headers?
-      response.content_length = @out_count
-    end
-
-    ensure_headers_written
-
-    super
-
-    if @chunked
-      @io << "0\r\n\r\n"
-      @io.flush
-    end
-  end
-end
-
-class HTTP::Client::Response
-  def pipe(io)
-    HTTP.serialize_body(io, headers, @body, @body_io, @version)
-  end
-end
-
-# Supports serialize_body without first writing headers
-module HTTP
-  def self.serialize_body(io, headers, body, body_io, version)
-    if body
-      io << body
-    elsif body_io
-      content_length = content_length(headers)
-      if content_length
-        copied = IO.copy(body_io, io)
-        if copied != content_length
-          raise ArgumentError.new("Content-Length header is #{content_length} but body had #{copied} bytes")
-        end
-      elsif Client::Response.supports_chunked?(version)
-        headers["Transfer-Encoding"] = "chunked"
-        serialize_chunked_body(io, body_io)
-      else
-        io << body
-      end
-    end
-  end
-end
-
-class HTTP::Client
-  property family : Socket::Family = Socket::Family::UNSPEC
-
-  private def socket
-    socket = @socket
-    return socket if socket
-
-    hostname = @host.starts_with?('[') && @host.ends_with?(']') ? @host[1..-2] : @host
-    socket = TCPSocket.new hostname, @port, @dns_timeout, @connect_timeout, @family
-    socket.read_timeout = @read_timeout if @read_timeout
-    socket.sync = false
-
-    {% if !flag?(:without_openssl) %}
-      if tls = @tls
-        socket = OpenSSL::SSL::Socket::Client.new(socket, context: tls, sync_close: true, hostname: @host)
-      end
-    {% end %}
-
-    @socket = socket
-  end
-end
-
-class TCPSocket
-  def initialize(host, port, dns_timeout = nil, connect_timeout = nil, family = Socket::Family::UNSPEC)
-    Addrinfo.tcp(host, port, timeout: dns_timeout, family: family) do |addrinfo|
-      super(addrinfo.family, addrinfo.type, addrinfo.protocol)
-      connect(addrinfo, timeout: connect_timeout) do |error|
-        close
-        error
-      end
-    end
   end
 end

@@ -71,7 +71,7 @@
     "Preferred video quality: ": "Foretrukken video kvalitet: ",
     "Player volume: ": "Lydstyrke: ",
     "Default comments: ": "Standard kommentarer: ",
-    "youtube": "youtube",
+    "youtube": "YouTube",
     "reddit": "reddit",
     "Default captions: ": "Standard undertekster: ",
     "Fallback captions: ": "Alternative undertekster: ",
@@ -86,6 +86,8 @@
     "dark": "mørk",
     "light": "lys",
     "Thin mode: ": "Tynd tilstand: ",
+    "Miscellaneous preferences": "",
+    "Automaticatic instance redirection (fallback to redirect.invidious.io): ": "",
     "Subscription preferences": "Abonnements præferencer",
     "Show annotations by default for subscribed channels: ": "Vis annotationer som standard for abonnerede kanaler: ",
     "Redirect homepage to feed: ": "Omdiriger startside til feed: ",
@@ -115,6 +117,7 @@
     "Administrator preferences": "Administrator præferencer",
     "Default homepage: ": "Standard startside: ",
     "Feed menu: ": "Feed menu: ",
+    "Show nickname on top: ": "",
     "Top enabled: ": "Top aktiveret: ",
     "CAPTCHA enabled: ": "CAPTCHA aktiveret: ",
     "Login enabled: ": "Login aktiveret: ",
@@ -161,6 +164,8 @@
     "Show more": "Vis mere",
     "Show less": "Vis mindre",
     "Watch on YouTube": "Se på YouTube",
+    "Switch Invidious Instance": "",
+    "Broken? Try another Invidious Instance": "",
     "Hide annotations": "Skjul annotationer",
     "Show annotations": "Vis annotationer",
     "Genre: ": "Genre: ",
@@ -182,7 +187,7 @@
     "View more comments on Reddit": "Se flere kommentarer på Reddit",
     "View `x` comments": {
         "([^.,0-9]|^)1([^.,0-9]|$)": "Vis `x` kommentarer.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "Vis `x` kommentarer."
+        "": "Vis `x` kommentarer"
     },
     "View Reddit comments": "Vis Reddit kommentarer",
     "Hide replies": "Skjul svar",
@@ -209,14 +214,14 @@
     "Could not get channel info.": "Kunne ikke hente kanal info.",
     "Could not fetch comments": "Kunne ikke hente kommentarer",
     "View `x` replies": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "Vis `x` besvarelser.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "Vis 'x' besvarelser."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "Vis `x` besvarelser",
+        "": "Vis 'x' besvarelser"
     },
     "`x` ago": "'x' siden",
     "Load more": "Hent flere",
     "`x` points": {
-        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` point.([^.,0-9]|^)1([^.,0-9]|$)",
-        "": "'x' point."
+        "([^.,0-9]|^)1([^.,0-9]|$)": "`x` point",
+        "": "'x' point"
     },
     "Could not create mix.": "Kunne ikke skabe blanding.",
     "Empty playlist": "Tom playliste",
@@ -415,5 +420,8 @@
     "location": "",
     "hdr": "",
     "filter": "",
-    "Current version: ": ""
+    "Current version: ": "",
+    "next_steps_error_message": "",
+    "next_steps_error_message_refresh": "",
+    "next_steps_error_message_go_to_youtube": ""
 }
